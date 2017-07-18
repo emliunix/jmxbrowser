@@ -10,12 +10,19 @@
             JMXConnector
             JMXConnectorFactory]))
 
+(def ^:private conn (atom nil))
+
 (defn get-conn []
-  (let [jmx-url-str "service:jmx:rmi:///jndi/rmi://localhost:1314/jmxrmi"
-        jmx-url (JMXServiceURL. jmx-url-str)
-        mxc (JMXConnectorFactory/connect jmx-url)
-        mbsc (.getMBeanServerConnection mxc)]
-    mbsc))
+  (if-let [c @conn]
+    c
+    ;; else
+    (reset! conn
+            (fn [_]
+              (let [jmx-url-str "service:jmx:rmi:///jndi/rmi://localhost:1314/jmxrmi"
+                    jmx-url (JMXServiceURL. jmx-url-str)
+                    mxc (JMXConnectorFactory/connect jmx-url)
+                    mbsc (.getMBeanServerConnection mxc)]
+                mbsc)))))
 
 (def ^:private listener
   (reify
@@ -29,5 +36,5 @@
 (defn uninstall-listener [conn on]
   (.removeNotificationListener conn on listener))
 
-
-
+(defn get-domains []
+  (.getDomains (get-conn)))
