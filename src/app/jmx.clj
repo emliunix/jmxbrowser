@@ -17,12 +17,11 @@
     c
     ;; else
     (reset! conn
-            (fn [_]
-              (let [jmx-url-str "service:jmx:rmi:///jndi/rmi://localhost:1314/jmxrmi"
-                    jmx-url (JMXServiceURL. jmx-url-str)
-                    mxc (JMXConnectorFactory/connect jmx-url)
-                    mbsc (.getMBeanServerConnection mxc)]
-                mbsc)))))
+            (let [jmx-url-str "service:jmx:rmi:///jndi/rmi://localhost:1314/jmxrmi"
+                  jmx-url (JMXServiceURL. jmx-url-str)
+                  mxc (JMXConnectorFactory/connect jmx-url)
+                  mbsc (.getMBeanServerConnection mxc)]
+              mbsc))))
 
 (def ^:private listener
   (reify
@@ -38,3 +37,8 @@
 
 (defn get-domains []
   (.getDomains (get-conn)))
+
+(defn get-mbeans-under-domain [domain]
+  (->> (.queryNames (get-conn) (ObjectName. (str domain ":*")) nil)
+       (into [])
+       (map #(.toString %))))
